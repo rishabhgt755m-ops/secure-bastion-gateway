@@ -56,6 +56,9 @@ Each phase is self-contained. Update the status line as work completes so this r
 
 **Cost safety:** The VPC itself is free. The only risk is accidentally provisioning a managed NAT Gateway instead of a NAT instance. Check the Terraform resource type before applying.
 
+
+**Open question to settle this phase:** where Terraform state lives. State starts local by default, which is fine for a single operator but breaks as soon as a second person runs apply, because there is nothing preventing two people writing state at the same time. The alternative is a remote backend, typically S3 with a DynamoDB table for locking. Decide which this project uses and record why, since the trade-off is a standard interview question.
+
 **Deliverable:** Terraform code provisioning a VPC with at least one public and one private subnet, correctly routed. Nothing running inside it yet.
 
 ---
@@ -131,6 +134,9 @@ Each phase is self-contained. Update the status line as work completes so this r
 - Provisioning an instance with no public IP
 - The SSH jump host pattern, connecting to a private instance via the bastion
 - Confirming the private instance is genuinely unreachable from the internet
+
+- **NAT instance.** The private instance needs outbound internet for package updates while remaining unreachable from outside. This is where the NAT instance from the cost-safe architecture table gets built, since this is the first phase where anything actually needs it.
+- **Source and destination check.** Every EC2 instance drops packets that are not addressed to it. A NAT instance exists to forward packets addressed elsewhere, so it fails silently until this check is disabled. Expect to hit this.
 
 **Cost safety:** Two instances now run at once, so the burn rate roughly doubles. On a $100 credit balance the constraint is total spend rather than a monthly hours quota, since this account is not on the legacy free tier model. Both instances get destroyed at the end of the session.
 
